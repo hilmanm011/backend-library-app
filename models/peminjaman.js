@@ -1,25 +1,77 @@
 const db = require("../db")
 
-const totalData = async() => {
-    const sql = `
+const totalData = async(queryParams) => {
+    let sql = `
         SELECT
             COUNT(*) total
         FROM
             trpeminjaman
             LEFT JOIN msmahasiswa ON  trpeminjaman.pmj_mhs_id = msmahasiswa.mhs_id
     `
+
+    if (queryParams.sfilter_search) {
+        sql += `
+            WHERE msmahasiswa.mhs_nim LIKE '%${queryParams.sfilter_search}%' 
+            OR msmahasiswa.mhs_nama LIKE '%${queryParams.sfilter_search}%' 
+            OR trpeminjaman.pmj_tglpeminjaman::TEXT LIKE '%${queryParams.sfilter_search}%' 
+            OR trpeminjaman.pmj_tglpengembalian::TEXT LIKE '%${queryParams.sfilter_search}%' 
+        `
+    }
     const { rows } = await db.query(sql)
     return rows[0].total
 }
 
-const totalDataReport = async() => {
-    const sql = `
+const totalDataReport = async(queryParams) => {
+    let sql = `
         SELECT
             COUNT(*) total
         FROM
             trpeminjaman
             LEFT JOIN msmahasiswa ON  trpeminjaman.pmj_mhs_id = msmahasiswa.mhs_id
+        WHERE 1=1
     `
+
+    if (
+        queryParams.sfilter_mhs_nim || 
+        queryParams.sfilter_mhs_nama || 
+        queryParams.sfilter_pmj_tglpeminjaman || 
+        queryParams.sfilter_pmj_tglpengembalian || 
+        queryParams.sfilter_lama_pinjam_hari 
+    ) {
+
+        if (queryParams.sfilter_mhs_nim) {
+            sql += `
+                AND msmahasiswa.mhs_nim LIKE '%${queryParams.sfilter_mhs_nim}%' 
+            `
+        }
+        
+        if (queryParams.sfilter_mhs_nama) {
+            sql += `
+                AND msmahasiswa.mhs_nama LIKE '%${queryParams.sfilter_mhs_nama}%' 
+            `
+        }
+        if (queryParams.sfilter_pmj_tglpeminjaman) {
+            sql += `
+                AND trpeminjaman.pmj_tglpeminjaman::TEXT LIKE '%${queryParams.sfilter_pmj_tglpeminjaman}%' 
+            `
+        }
+        if (queryParams.sfilter_pmj_tglpengembalian) {
+            sql += `
+                AND trpeminjaman.pmj_tglpengembalian::TEXT LIKE '%${queryParams.sfilter_pmj_tglpengembalian}%' 
+            `
+        }
+        if (queryParams.sfilter_lama_pinjam_hari) {
+            sql += `
+                AND 
+					CASE 
+                    WHEN trpeminjaman.pmj_statuspengembalian = 'N' THEN
+                        EXTRACT(DAY FROM AGE(CURRENT_DATE, trpeminjaman.pmj_tglpeminjaman)) + 1
+                    ELSE
+                        EXTRACT(DAY FROM AGE(trpeminjaman.pmj_tglpengembalian, trpeminjaman.pmj_tglpeminjaman)) + 1
+                    END = ${queryParams.sfilter_lama_pinjam_hari}
+            `
+        }
+    }
     const { rows } = await db.query(sql)
     return rows[0].total
 }
@@ -111,8 +163,6 @@ const report = async (queryParams) => {
     let limit = 100
     let page = 1
 
-    console.log(queryParams);
-
     // set limit queryParams
     if (queryParams?.limit) {
         if (queryParams.limit.toUpperCase() !== 'ALL') {
@@ -199,7 +249,17 @@ const report = async (queryParams) => {
         sql += ` ORDER BY trpeminjaman.pmj_tglpeminjaman ASC`
     } else if (queryParams.sfilter_buk_id || queryParams.sfilter_buk_judul) {
         sql += ` ORDER BY trpeminjaman.pmj_tglpeminjaman ASC`
-    } else {
+    } else if(
+
+        !queryParams.sfilter_mhs_nim && 
+        !queryParams.sfilter_mhs_nama && 
+        !queryParams.sfilter_pmj_tglpeminjaman && 
+        !queryParams.sfilter_pmj_tglpengembalian && 
+        !queryParams.sfilter_lama_pinjam_hari &&
+        !queryParams.sfilter_buk_id &&
+        !queryParams.sfilter_buk_judul
+
+    ) {
         sql += ` ORDER BY trpeminjaman.pmj_tglpeminjaman ASC`
         sql += ` LIMIT ${perPage} OFFSET ${offset}`
     }
