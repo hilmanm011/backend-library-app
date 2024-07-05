@@ -107,27 +107,6 @@ const findDtPeminjamanByPmjId = async (pmj_id) =>{
     return rows
 }
 
-// Function to filter dtbuku array
-const filterBooks = (data, bukId, bukJudul) => {
-    return data.map(item => {
-        const filteredDtBuku = item.dtbuku.filter(book => {
-            if (bukId) {
-                return book.buk_id === bukId
-            }
-            if (bukJudul) {
-                return book.buk_judul.toLowerCase().includes(bukJudul)
-            }
-
-            return book
-        });
-
-        return {
-            ...item,
-            dtbuku: filteredDtBuku
-        };
-    });
-};
-
 const report = async (queryParams) => {
     let limit = 100
     let page = 1
@@ -247,13 +226,26 @@ const report = async (queryParams) => {
 
     // FILTER BUKU
     if (queryParams.sfilter_buk_id) {
-        const resultFilter = filterBooks(resultData, queryParams.sfilter_buk_id)
-        return resultFilter
+        const filterByBukId = (array, bukId) => {
+            return array.filter(item => 
+                item.dtbuku.some(book => book.buk_id == bukId)
+            );
+        };
+
+        return filterByBukId(resultData, queryParams.sfilter_buk_id)
+
     }
 
     if (queryParams.sfilter_buk_judul) {
-        const resultFilter = filterBooks(resultData, queryParams.sfilter_buk_judul)
-        return resultFilter
+
+        const filterByBukJudul = (array, bukJudul) => {
+            return array.filter(item => 
+                item.dtbuku.some(book => book.buk_judul.toLowerCase().includes(bukJudul.toLowerCase()))
+            );
+        };
+
+        return filterByBukJudul(resultData, queryParams.sfilter_buk_judul)
+
     }
 
     return resultData
