@@ -11,6 +11,14 @@ router
         peminjamanCtrl.findAllPeminjaman
     );
 
+    
+router
+    .route(`${baseroute}/report`)
+    .get(
+        peminjamanCtrl.findAllReport
+    );
+
+
 router
     .route(`${baseroute}/:pmj_id`)
     .get(
@@ -24,9 +32,9 @@ router
     );
 
 router
-    .route(`${baseroute}/:pmj_id`)
-    .put(
-        peminjamanCtrl.updatePeminjaman
+    .route(`${baseroute}/:pmj_id/status`)
+    .patch(
+        peminjamanCtrl.updateStatusYpeminjaman
     );
 
 module.exports = router;

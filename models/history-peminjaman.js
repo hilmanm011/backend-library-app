@@ -58,9 +58,13 @@ const findAll = async(queryParams) => {
         if (queryParams.sfilter_startdate && queryParams.sfilter_enddate) {
             sql += ` AND hispeminjaman.his_crttime BETWEEN '${queryParams.sfilter_startdate}' AND '${queryParams.sfilter_enddate}'`
         }
+        sql += ` ORDER BY hispeminjaman.his_crttime DESC`
     } else {
+        sql += ` ORDER BY hispeminjaman.his_crttime DESC`
         sql += ` LIMIT ${perPage} OFFSET ${offset}`
     }
+
+    
 
     const { rows } = await db.query(sql)
     return rows

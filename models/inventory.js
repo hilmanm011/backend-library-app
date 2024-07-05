@@ -36,14 +36,28 @@ const findAll = async(queryParams) => {
     const perPage = limit; //limit
     const offset = (page - 1) * perPage; // Calculate the offset
 
-    const sql = `
+    let sql = `
         SELECT
             *
         FROM
             trinventory
             INNER JOIN msbuku ON trinventory.inv_buk_id = msbuku.buk_id
-        LIMIT ${perPage} OFFSET ${offset}
     `
+
+    if (queryParams.sfilter_search) {
+        sql += ` 
+            WHERE
+            trinventory.inv_lokasi LIKE '%${queryParams.sfilter_search}%' 
+            OR trinventory.inv_rak LIKE '%${queryParams.sfilter_search}%' 
+            OR msbuku.buk_judul LIKE '%${queryParams.sfilter_search}%' 
+            OR trinventory.inv_jumlah::TEXT LIKE '%${queryParams.sfilter_search}%' 
+        `
+        sql += ` ORDER BY buk_crttime DESC, buk_judul ASC`
+    } else {
+        sql += ` ORDER BY buk_crttime DESC, buk_judul ASC`
+        sql += ` LIMIT ${perPage} OFFSET ${offset}`
+    }
+
     const { rows } = await db.query(sql)
     return rows
 }
@@ -113,11 +127,38 @@ const cekStokByBukuId = async(buk_id) => {
     return rows[0].stok_tersedia !== null ? rows[0].stok_tersedia : 0;
 }
 
+const getRakByBukuIdAndStokReady = async (buk_id) =>{
+    const sql = `
+        SELECT * FROM trinventory WHERE inv_buk_id = ${buk_id} AND inv_jumlah > 0
+    `
+    const { rows } = await db.query(sql)
+    return rows
+}
+
+const findMinStokInventoryByBukuId = async (buk_id) => {
+    const sql = `
+        SELECT
+            * 
+        FROM
+            trinventory 
+        WHERE
+            inv_buk_id = ${buk_id} 
+            AND inv_jumlah >= 0 
+        ORDER BY
+            inv_jumlah ASC 
+            LIMIT 1;
+    `
+    const { rows } = await db.query(sql)
+    return rows.length > 0 ? rows[0] : null
+}
+
 module.exports = {
     totalData,
     findAll,
     findById,
     insertInventory,
     updateInventory,
-    cekStokByBukuId
+    cekStokByBukuId,
+    getRakByBukuIdAndStokReady,
+    findMinStokInventoryByBukuId
 }

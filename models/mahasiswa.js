@@ -35,9 +35,23 @@ const findAll = async(queryParams) => {
     const perPage = limit; //limit
     const offset = (page - 1) * perPage; // Calculate the offset
 
-    const sql = `
-        SELECT * FROM msmahasiswa LIMIT ${perPage} OFFSET ${offset}
+    let sql = `
+        SELECT * FROM msmahasiswa 
     `
+    if (queryParams.sfilter_search) {
+        sql += ` 
+            WHERE 
+                mhs_id::TEXT LIKE '%${queryParams.sfilter_search}%' 
+                OR mhs_nama LIKE '%${queryParams.sfilter_search}%' 
+                OR mhs_nim LIKE '%${queryParams.sfilter_search}%' 
+                OR mhs_jurusan LIKE '%${queryParams.sfilter_search}%' 
+                OR mhs_tahunmasuk::TEXT LIKE '%${queryParams.sfilter_search}%' 
+        `
+        sql += ` ORDER BY mhs_nama ASC, mhs_nim ASC `
+    } else {
+        sql += ` ORDER BY mhs_nama ASC, mhs_nim ASC `
+        sql += ` LIMIT ${perPage} OFFSET ${offset}`
+    }
     const { rows } = await db.query(sql)
     return rows
 }

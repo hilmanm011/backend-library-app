@@ -36,7 +36,7 @@ const findAll = async(queryParams) => {
     const perPage = limit; //limit
     const offset = (page - 1) * perPage; // Calculate the offset
 
-    const sql = `
+    let sql = `
         SELECT
             msbuku.buk_id,
             msbuku.buk_judul,
@@ -50,8 +50,28 @@ const findAll = async(queryParams) => {
         FROM
             msbuku
             LEFT JOIN trinventory ON msbuku.buk_id = trinventory.inv_buk_id
-        LIMIT ${perPage} OFFSET ${offset}
     `
+
+    // Sfilter
+    console.log(queryParams);
+    if (queryParams.sfilter_search) {
+        sql += ` 
+            WHERE 
+                msbuku.buk_id::TEXT LIKE '%${queryParams.sfilter_search}%' 
+                OR msbuku.buk_judul LIKE '%${queryParams.sfilter_search}%' 
+                OR msbuku.buk_pengarang LIKE '%${queryParams.sfilter_search}%' 
+                OR msbuku.buk_penerbit LIKE '%${queryParams.sfilter_search}%' 
+                OR msbuku.buk_isbn LIKE '%${queryParams.sfilter_search}%' 
+                OR msbuku.buk_tahunterbit::TEXT LIKE '%${queryParams.sfilter_search}%' 
+                OR trinventory.inv_rak LIKE '%${queryParams.sfilter_search}%' 
+                OR trinventory.inv_jumlah::TEXT LIKE '%${queryParams.sfilter_search}%'
+        `
+        sql += ` ORDER BY msbuku.buk_judul ASC, trinventory.inv_jumlah DESC`
+    } else {
+        sql += ` ORDER BY msbuku.buk_judul ASC, trinventory.inv_jumlah DESC`
+        sql += ` LIMIT ${perPage} OFFSET ${offset}`
+    }
+
     const { rows } = await db.query(sql)
     return rows
 }
