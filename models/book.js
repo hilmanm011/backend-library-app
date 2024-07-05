@@ -53,7 +53,6 @@ const findAll = async(queryParams) => {
     `
 
     // Sfilter
-    console.log(queryParams);
     if (queryParams.sfilter_search) {
         sql += ` 
             WHERE 

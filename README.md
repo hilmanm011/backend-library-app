@@ -1,5 +1,9 @@
 # LIBRARY APP
 Express Js, PostgreSQL
+
+# API Docs
+https://www.postman.com/restless-water-353723/workspace/backend-library-app/overview
+
 ## Prasyarat
 
 Pastikan Anda telah menginstal perangkat berikut sebelum memulai:
